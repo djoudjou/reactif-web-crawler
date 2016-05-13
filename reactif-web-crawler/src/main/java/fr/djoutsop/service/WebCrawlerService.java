@@ -27,7 +27,7 @@ public class WebCrawlerService {
 		return null;
 	}
 
-	static Stream<Link> scrap(Link urlToScrap) {
+	protected Stream<Link> scrap(Link urlToScrap) {
 		try {
 			Response response = Jsoup.connect(urlToScrap.getPath()).ignoreContentType(true)
 					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1").execute();
@@ -38,7 +38,7 @@ public class WebCrawlerService {
 				List<Link> urls = response.parse().getElementsByTag("a").stream().map(e -> new Link(urlToScrap.getPath() + "/" + e.attr("href"), new Date()))
 						.collect(Collectors.toList());
 				
-				return urls.stream().flatMap(WebCrawlerService::scrap);
+				return urls.stream().flatMap(this::scrap);
 			} else {
 				System.out.println("stop>>" + urlToScrap);
 				return Stream.of(urlToScrap);
