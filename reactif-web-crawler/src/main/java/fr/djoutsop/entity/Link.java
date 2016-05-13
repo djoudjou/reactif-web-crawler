@@ -16,6 +16,17 @@ public class Link {
 		this.lastModified = lastModified;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Link [path=");
+		builder.append(path);
+		builder.append(", lastModified=");
+		builder.append(lastModified);
+		builder.append("]");
+		return builder.toString();
+	}
+
 	public Link(String path, String lastModifiedStr) throws ParseException {
 		this.path = path;
 		this.lastModified = DATE_FORMAT.parse(lastModifiedStr);
