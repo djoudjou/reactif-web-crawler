@@ -81,7 +81,7 @@ public class ScraperService {
 
 	Content scrap(Document document) {
 		String title = document.getElementsByTag("title").text();
-		Optional<Element> descriptionTag = document.getElementsByTag("meta").stream().filter(e -> e.attr("name") == "description").findFirst();
+		Optional<Element> descriptionTag = document.getElementsByTag("meta").stream().filter(e -> e.attr("name").equals("description")).findFirst();
 		String description = descriptionTag.isPresent() ? descriptionTag.get().attr("content") : null;
 		List<URL> links = document.getElementsByTag("a").stream().map(this::mapUrl).filter(url->url!=null).collect(Collectors.toList());
 		return new Content(title, description, links);
