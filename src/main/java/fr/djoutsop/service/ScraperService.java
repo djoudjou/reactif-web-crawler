@@ -3,10 +3,14 @@ package fr.djoutsop.service;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
+import org.jsoup.Connection;
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,12 +19,27 @@ import org.jsoup.nodes.Element;
 import fr.djoutsop.entity.Content;
 
 public class ScraperService {
-	public Content scrap(URL urlToScrap) throws IOException {
+	
+	private Set<String> allowedExtensions;
+	
+	public ScraperService(String ... extensions) {
+		this.allowedExtensions = new HashSet<>();
+		for(String ext:extensions){
+			this.allowedExtensions.add(ext.toLowerCase());
+		}
+		this.allowedExtensions.add("");
+	}
+	
+	public Content scrap(URL urlToScrap,URL referer) throws IOException {
 
 		Content content = null;
 
-		Response response = Jsoup.connect(urlToScrap.getPath()).ignoreContentType(true)
-				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1").execute();
+		Connection connection = Jsoup.connect(urlToScrap.toString()).ignoreContentType(true)
+				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1");
+		
+		
+		Response response = (referer != null) ? connection.referrer(referer.toString()).execute()
+				: connection.execute();
 
 		String contentType = response.contentType();
 
@@ -34,12 +53,30 @@ public class ScraperService {
 		return scrap(Jsoup.parse(htmlContent));
 	}
 
+
 	URL mapUrl(Element elt) {
 		try {
-			return new URL(elt.attr("href"));
+			if (isNotQueryFilter(elt) && isSubUrl(elt) && isValidExtension(elt)) {
+				URL url = new URL(elt.absUrl("href"));
+				return url;
+			}
 		} catch (MalformedURLException e) {
-			return null;
+			System.err.println(e);
 		}
+		return null;
+	}
+
+	boolean isSubUrl(Element elt) {
+		return elt.absUrl("href").startsWith(elt.baseUri());
+	}
+
+	boolean isNotQueryFilter(Element elt) {
+		return !elt.attr("href").startsWith("?");
+	}
+	
+	boolean isValidExtension(Element elt) {
+		String extension = FilenameUtils.getExtension(elt.attr("href")).toLowerCase();
+		return allowedExtensions.contains(extension);
 	}
 
 	Content scrap(Document document) {
