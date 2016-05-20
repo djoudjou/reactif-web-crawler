@@ -1,4 +1,4 @@
-package fr.djoutsop.crawler.service;
+package fr.djoutsop.crawler.service.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -14,18 +14,16 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
-public class WebCrawlerServiceTest {
+public class ProceduralWebCrawlerServiceIntTest {
 
 
-	private static Server server;
+	private Server server;
 
 	@Before
 	public void startJetty() throws Exception {
-		Server server = new Server(8080);
+		server = new Server(8080);
 		ResourceHandler resource_handler = new ResourceHandler();
 		resource_handler.setDirectoriesListed(true);
 		resource_handler.setWelcomeFiles(new String[] { "index.html" });
@@ -49,14 +47,16 @@ public class WebCrawlerServiceTest {
 	@Test
 	public void crawl() throws IOException {
 		// Given
-		WebCrawlerService subject = new WebCrawlerService(4);
-		subject.setScraperService(new ScraperService("zip"));
+		ProceduralWebCrawlerService subject = new ProceduralWebCrawlerService(4,"zip");
+		subject.scraper = new Scraper();
 		
 		// When
 		List<String> result = subject.crawl("http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296").collect(Collectors.toList());
 		
 		// Then
-		assertThat(result,containsInAnyOrder("http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296/0_0_le_jour_de_cong_de_tatsumaki_5676a32b90a8a/%5BMFT%5DOne_Punch-Man_v10_c0.zip","http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296/0_2_special_sentai_572ca2d478266/%5BMFT%5DOne_Punch-Man_c0_s2.zip"));
+		assertThat(result, containsInAnyOrder(
+				"http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296/0_0_le_jour_de_cong_de_tatsumaki_5676a32b90a8a/%5BMFT%5DOne_Punch-Man_v10_c0.zip",
+				"http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296/0_2_special_sentai_572ca2d478266/%5BMFT%5DOne_Punch-Man_c0_s2.zip"));
 
 	}
 }

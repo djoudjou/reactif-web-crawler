@@ -6,7 +6,6 @@
 	<packaging>jar</packaging>
 	<version>1.0-SNAPSHOT</version>
 	<name>reactif-web-crawler</name>
-	<url>http://maven.apache.org</url>
 
 	<scm>
 		<url>https://github.com/djoudjou/reactif-web-crawler</url>
@@ -127,6 +126,13 @@
 			<artifactId>jetty-server</artifactId>
 			<version>9.3.8.RC0</version>
 		</dependency>
+		<dependency>
+			<!-- http://mvnrepository.com/artifact/org.apache.tomcat/catalina -->
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>catalina</artifactId>
+			<version>6.0.45</version>
+		</dependency>
+
 
 
 	</dependencies>
