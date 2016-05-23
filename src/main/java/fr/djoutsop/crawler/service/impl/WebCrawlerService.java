@@ -5,17 +5,22 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.catalina.util.RequestUtil;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.tomcat.util.http.RequestUtil;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import fr.djoutsop.crawler.entity.Content;
-import fr.djoutsop.crawler.service.WebCrawlerService;
+import fr.djoutsop.crawler.service.IWebCrawlerService;
+import fr.djoutsop.crawler.utils.Loggable;
 
-public class ProceduralWebCrawlerService implements WebCrawlerService {
-	Logger logger = LoggerFactory.getLogger(ProceduralWebCrawlerService.class);
+@Service
+public class WebCrawlerService implements IWebCrawlerService {
+	@Loggable
+	Logger logger;
 
+	@Autowired
 	Scraper scraper;
 
 	int maxDepth;
@@ -23,13 +28,6 @@ public class ProceduralWebCrawlerService implements WebCrawlerService {
 	Set<String> scrappedUrl = new HashSet<>();
 
 	Set<String> allowedExtensions = new HashSet<>();
-
-	public ProceduralWebCrawlerService(int maxDepth, String... extensions) {
-		this.maxDepth = maxDepth;
-		for (String ext : extensions) {
-			this.allowedExtensions.add(ext.toLowerCase());
-		}
-	}
 
 	boolean filterAllowedExtensions(String url) {
 		if (!allowedExtensions.isEmpty()) {
@@ -52,7 +50,7 @@ public class ProceduralWebCrawlerService implements WebCrawlerService {
 	boolean isFile(String url) {
 		return !"".equals(FilenameUtils.getExtension(url));
 	}
-	
+
 	String normalize(String url) {
 		String normalizedUrl = RequestUtil.normalize(url);
 		while (normalizedUrl.endsWith("/")) {
@@ -75,14 +73,16 @@ public class ProceduralWebCrawlerService implements WebCrawlerService {
 				}
 			}
 		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+			logger.error("scrap url={} failed with={}", urlToScrap, ex.getMessage(), ex);
 		}
 		return Stream.empty();
 	}
 
-	
-
-	public Stream<String> crawl(String url) throws IOException {
+	public Stream<String> crawl(String url, int maxDepth, String... extensions) throws IOException {
+		this.maxDepth = maxDepth;
+		for (String ext : extensions) {
+			this.allowedExtensions.add(ext.toLowerCase());
+		}
 		scrappedUrl.clear();
 		filterNewUrl(url);
 		return recursiveScrap(url, url, 0);

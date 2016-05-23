@@ -10,9 +10,11 @@ import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.stereotype.Component;
 
 import fr.djoutsop.crawler.entity.Content;
 
+@Component
 public class Scraper {
 
 	private final String EMPTY_STRING = "";
