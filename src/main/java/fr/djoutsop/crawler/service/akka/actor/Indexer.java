@@ -7,15 +7,14 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.japi.pf.ReceiveBuilder;
+import akka.actor.UntypedActor;
 import fr.djoutsop.crawler.service.akka.Messages.Content;
 import fr.djoutsop.crawler.service.akka.Messages.Index;
 import fr.djoutsop.crawler.service.akka.Messages.IndexFinished;
 
-public class Indexer extends AbstractActor {
+public class Indexer extends UntypedActor {
 	Logger logger = LoggerFactory.getLogger(Indexer.class);
 
 	ActorRef supervisor;
@@ -28,17 +27,25 @@ public class Indexer extends AbstractActor {
 
 	public Indexer(ActorRef supervisor) {
 		this.supervisor = supervisor;
-		receive(ReceiveBuilder.match(Index.class, index -> {
-			logger.debug("saving page {} with {}", index.url, index.content);
-			store.put(index.url, index.content);
-			supervisor.tell(new IndexFinished(index.url, index.content.urls), self());
-		}).build());
 	}
 
 	@Override
 	public void postStop() throws Exception {
 		super.postStop();
-		store.forEach((url, content) -> logger.debug("{} {}", url, content));
-		logger.debug("{}", store.size());
+		//store.forEach((url, content) -> logger.debug("{} {}", url, content));
+		//logger.debug("{}", store.size());
+	}
+
+	@Override
+	public void onReceive(Object message) throws Exception {
+		if(message instanceof Index) {
+			Index index = (Index)message;
+			logger.debug("saving page {} with {}", index.url, index.content);
+			store.put(index.url, index.content);
+			supervisor.tell(new IndexFinished(index.url, index.content.urls), self());
+		} else {
+			unhandled(message);
+		}
+		
 	}
 }

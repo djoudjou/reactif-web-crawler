@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import fr.djoutsop.crawler.service.impl.WebCrawlerService;
+import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WebCrawlerControllerTest {

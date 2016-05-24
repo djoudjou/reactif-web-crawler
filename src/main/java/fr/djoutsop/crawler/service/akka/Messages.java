@@ -50,6 +50,12 @@ public class Messages {
 			this.meta = meta;
 			this.urls = urls;
 		}
+
+		@Override
+		public String toString() {
+			return String.format("Content [title=%s, meta=%s, urls=%s]", title,
+					meta, urls);
+		}
 	}
 
 	public static class ScrapFinished implements Serializable {

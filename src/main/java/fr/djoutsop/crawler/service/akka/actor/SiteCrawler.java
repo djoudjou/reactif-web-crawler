@@ -1,50 +1,92 @@
 package fr.djoutsop.crawler.service.akka.actor;
 
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.AbstractActor;
+import scala.concurrent.ExecutionContext;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.japi.pf.ReceiveBuilder;
-import fr.djoutsop.crawler.service.akka.Messages.Content;
-import fr.djoutsop.crawler.service.akka.Messages.Index;
-import fr.djoutsop.crawler.service.akka.Messages.IndexFinished;
+import akka.actor.UntypedActor;
+import akka.dispatch.Futures;
+import akka.dispatch.Recover;
+import akka.pattern.Patterns;
+import akka.util.Timeout;
+import fr.djoutsop.crawler.service.akka.Messages.Scrap;
+import fr.djoutsop.crawler.service.akka.Messages.*;
 
-public class SiteCrawler extends AbstractActor {
+public class SiteCrawler extends UntypedActor {
 	Logger logger = LoggerFactory.getLogger(SiteCrawler.class);
+
+	final String process = "Process next url";
+
+	final ActorRef scraper;
 
 	ActorRef supervisor;
 	ActorRef indexer;
 
+	Queue<URL> toProcess = new ConcurrentLinkedQueue<>();
 
-	public static Props props(ActorRef supervisor,ActorRef indexer) {
-		return Props.create(SiteCrawler.class, () -> new SiteCrawler(supervisor, indexer));
+	public static Props props(ActorRef supervisor, ActorRef indexer) {
+		return Props.create(SiteCrawler.class, () -> new SiteCrawler(
+				supervisor, indexer));
 	}
 
-	public SiteCrawler(ActorRef supervisor,ActorRef indexer) {
+	public SiteCrawler(ActorRef supervisor, ActorRef indexer) {
 		this.supervisor = supervisor;
 		this.indexer = indexer;
-		
-		final String process = "Process next url";
 
-		ActorRef scraper = context().actorOf(Scraper.props(indexer));
-//	  implicit val timeout = Timeout(3 seconds)
-//	  val tick =
-//	    context.system.scheduler.schedule(0 millis, 1000 millis, self, process)
-//	  var toProcess = List.empty[URL]
-		
-		
-		receive(ReceiveBuilder.match(Index.class, index -> {
-			logger.debug("saving page {} with {}", index.url, index.content);
-//			store.put(index.url, index.content);
-			supervisor.tell(new IndexFinished(index.url, index.content.urls), self());
-		}).build());
+		scraper = context().actorOf(Scraper.props(indexer));
+
+		ActorSystem system = context().system();
+		system.scheduler().schedule(Duration.Zero(),
+				Duration.create(1000, TimeUnit.MILLISECONDS), self(), process,
+				system.dispatcher(), null);
+
 	}
 
+	@Override
+	public void onReceive(Object message) throws Exception {
+		if (message instanceof Scrap) {
+			Scrap scrap = (Scrap) message;
+			logger.debug("waiting... {}", scrap.url);
+			toProcess.offer(scrap.url);
+		}
+		if (process.equals(message)) {
+			URL url = toProcess.poll();
+			if (url != null) {
+				logger.debug("site scraping... {}", url);
+
+				Timeout timeout = new Timeout(Duration.create(3, "seconds"));
+				Future<Object> ask = Patterns.ask(scraper, new Scrap(url),timeout);
+
+				final ExecutionContext ec = context().dispatcher();
+
+				Future<ScrapFailure> askWithRecover = ask.recoverWith(
+						new Recover<Future<ScrapFailure>>() {
+
+							@Override
+							public Future<ScrapFailure> recover(
+									Throwable exception) throws Throwable {
+								logger.error("site scraping {} error {}", url,exception.getMessage());
+								return Futures.future(() -> new ScrapFailure(url,exception), ec);
+							}
+
+						}, ec);
+				akka.pattern.Patterns.pipe(askWithRecover, ec).to(supervisor);
+			}
+		} else {
+			unhandled(message);
+		}
+
+	}
 
 }

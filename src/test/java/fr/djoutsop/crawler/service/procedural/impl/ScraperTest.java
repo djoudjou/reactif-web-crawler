@@ -1,4 +1,4 @@
-package fr.djoutsop.crawler.service.impl;
+package fr.djoutsop.crawler.service.procedural.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import fr.djoutsop.crawler.entity.Content;
+import fr.djoutsop.crawler.service.procedural.impl.Scraper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ScraperTest {

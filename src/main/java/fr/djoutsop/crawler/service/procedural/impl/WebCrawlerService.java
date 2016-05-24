@@ -1,4 +1,4 @@
-package fr.djoutsop.crawler.service.impl;
+package fr.djoutsop.crawler.service.procedural.impl;
 
 import java.io.IOException;
 import java.util.HashSet;

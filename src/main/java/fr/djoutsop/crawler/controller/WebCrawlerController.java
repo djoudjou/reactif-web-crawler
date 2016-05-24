@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import fr.djoutsop.crawler.service.impl.WebCrawlerService;
+import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
 import fr.djoutsop.crawler.utils.Loggable;
 
 @Controller

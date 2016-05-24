@@ -1,6 +1,5 @@
 package fr.djoutsop.crawler.service.akka.actor;
 
-
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,117 +10,106 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.PoisonPill;
+import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.japi.pf.ReceiveBuilder;
 import fr.djoutsop.crawler.service.akka.Messages.IndexFinished;
+import fr.djoutsop.crawler.service.akka.Messages.Scrap;
+import fr.djoutsop.crawler.service.akka.Messages.ScrapFailure;
+import fr.djoutsop.crawler.service.akka.Messages.ScrapFinished;
 import fr.djoutsop.crawler.service.akka.Messages.Start;
+import fr.djoutsop.crawler.service.akka.impl.ScrapObserver;
 
 public class Supervisor extends UntypedActor {
-	
+
 	Logger logger = LoggerFactory.getLogger(Supervisor.class);
-	
+
 	final int maxPages = 100;
 	final int maxRetries = 2;
 	int numVisited = 0;
+	final Set<URL> toScrap = new HashSet<>();
+	final Map<URL, Integer> scrapCounts = new HashMap<>();
+	final Map<String, ActorRef> host2Actor = new HashMap<>();
+	final ActorRef indexer;
+	final ActorSystem system;
+	final ScrapObserver scrapObserver;
 	
-	Set<String> toScrap = new HashSet<>();
-	Map<String,Integer> scrapCounts = new HashMap<>();
-	Map<String, ActorRef> host2Actor = new HashMap<>();
 	
-	public Supervisor() {
-		final ActorRef indexer = context().actorOf(Indexer.props(self()));
-		
-		receive(ReceiveBuilder.
-			      match(Start.class, start -> {
-					logger.debug("starting {}", start.url);
-					store.put(index.url, index.content);
-					supervisor.tell(new IndexFinished(index.url, index.content.urls), self());
-			      }).build()
-			    );
-		
+	public static Props props(ActorSystem system,ScrapObserver scrapObserver) {
+		return Props.create(Supervisor.class, () -> new Supervisor(system,scrapObserver));
+	}
+	
+	public Supervisor(ActorSystem system, ScrapObserver scrapObserver) {
+		this.system = system;
+		this.scrapObserver = scrapObserver;
+		indexer = context().actorOf(Indexer.props(self()));
 	}
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof Start) {
-			Start start = (Start)message;
+		if (message instanceof Start) {
+			Start start = (Start) message;
 			logger.debug("starting {}", start.url);
 			scrap(start.url);
+		} else if (message instanceof ScrapFinished) {
+			ScrapFinished scrapFinished = (ScrapFinished) message;
+			logger.debug("scraping finished {}", scrapFinished.url);
+		} else if (message instanceof IndexFinished) {
+			IndexFinished indexFinished = (IndexFinished) message;
+			if (numVisited < maxPages) {
+				(new HashSet<>(indexFinished.urls)).stream()
+						.filter(l -> !scrapCounts.containsKey(l))
+						.forEach(this::scrap);
+			}
+			checkAndShutdown(indexFinished.url);
+		} else if (message instanceof ScrapFailure) {
+			ScrapFailure scrapFailure = (ScrapFailure) message;
+			int retries = scrapCounts.get(scrapFailure.url);
+			logger.debug("scraping failed {}, {}, reason = {}",scrapFailure.url, retries, scrapFailure.reason.getMessage());
+			if (retries < maxRetries) {
+				countVisits(scrapFailure.url);
+				host2Actor.get(scrapFailure.url.getHost()).tell(
+						new Scrap(scrapFailure.url), self());
+			} else {
+				checkAndShutdown(scrapFailure.url);
+			}
 		} else {
 			unhandled(message);
 		}
-		
 	}
 
 	void scrap(URL url) {
 		String host = url.getHost();
-		logger.debug("host = {}",host);
+		logger.debug("host = {}", host);
 		if (!host.isEmpty()) {
 			ActorRef actor = host2Actor.get(host);
-			if(actor == null) {
-				SiteCrawler
-//		        ActorRef buff = context().system().actorOf( Props(new SiteCrawler(self, indexer)))
-		        host2Actor += (host -> buff)
-		        buff
-		      }
 
-			      numVisited += 1
-			      toScrap += url
-			      countVisits(url)
-			      actor ! Scrap(url)
-			    }
+			if (actor == null) {
+				ActorRef buff = context().system().actorOf(
+						SiteCrawler.props(self(), indexer));
+				host2Actor.put(host, buff);
+				actor = buff;
+			}
+
+			numVisited += 1;
+			toScrap.add(url);
+			scrapObserver.scrap(url);
+			countVisits(url);
+			actor.tell(new Scrap(url), self());
+		}
 	}
-	
-	
-	
-	
 
-//
-//			  def receive: Receive = {
-//			    case Start(url) =>
-//			      println(s"starting $url")
-//			      scrap(url)
-//			    case ScrapFinished(url) =>
-//			      println(s"scraping finished $url")
-//			    case IndexFinished(url, urls) =>
-//			      if (numVisited < maxPages)
-//			        urls.toSet.filter(l => !scrapCounts.contains(l)).foreach(scrap)
-//			      checkAndShutdown(url)
-//			    case ScrapFailure(url, reason) =>
-//			      val retries: Int = scrapCounts(url)
-//			      println(s"scraping failed $url, $retries, reason = $reason")
-//			      if (retries < maxRetries) {
-//			        countVisits(url)
-//			        host2Actor(url.getHost) ! Scrap(url)
-//			      } else
-//			        checkAndShutdown(url)
-//			  }
-//
-//			  def checkAndShutdown(url: URL): Unit = {
-//			    toScrap -= url
-//			    // if nothing to visit
-//			    if (toScrap.isEmpty) {
-//			      self ! PoisonPill
-//			      system.terminate()
-//			    }
-//			  }
-//
-//			  def scrap(url: URL) = {
-//			    val host = url.getHost
-//			    println(s"host = $host")
-//			    if (!host.isEmpty) {
-//			      val actor = host2Actor.getOrElse(host, {
-//			        val buff = system.actorOf(Props(new SiteCrawler(self, indexer)))
-//			        host2Actor += (host -> buff)
-//			        buff
-//			      })
-//
-//			      numVisited += 1
-//			      toScrap += url
-//			      countVisits(url)
-//			      actor ! Scrap(url)
-//			    }
-//			  }
-//
-//			  def countVisits(url: URL): Unit = scrapCounts += (url -> (scrapCounts.getOrElse(url, 0) + 1))
+	void checkAndShutdown(URL url) {
+		toScrap.remove(url);
+		// if nothing to visit
+		if (toScrap.isEmpty()) {
+			self().tell(PoisonPill.getInstance(), self());
+			system.terminate();
+		}
+	}
+
+	void countVisits(URL url) {
+		scrapCounts.put(url, new Integer(scrapCounts.getOrDefault(url, 0) + 1));
+	}
 }
