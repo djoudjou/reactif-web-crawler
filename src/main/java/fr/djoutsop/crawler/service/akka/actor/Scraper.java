@@ -40,7 +40,7 @@ public class Scraper extends UntypedActor {
 
 	public Scraper(ActorRef indexer) {
 		this.indexer = indexer;
-		this.urlValidator = new UrlValidator();
+		this.urlValidator = new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
 		this.store = new HashMap<>();
 	}
 

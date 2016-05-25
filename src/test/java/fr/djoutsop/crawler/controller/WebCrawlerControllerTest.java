@@ -1,7 +1,7 @@
 package fr.djoutsop.crawler.controller;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,15 +21,23 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import fr.djoutsop.crawler.service.akka.impl.AkkaWebCrawlerService;
 import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WebCrawlerControllerTest {
 
 	private MockMvc mockMvc;
+	
+	final int defaultDepth = 0;
+	final String defaultMethod = "std";
+	final String[] defaultExtensions = new String[0];
 
 	@Mock
 	WebCrawlerService webCrawlerServiceMock;
+	
+	@Mock
+	AkkaWebCrawlerService akkaWebCrawlerServiceMock;
 
 	@Mock
 	Logger loggerMock;
@@ -58,14 +66,14 @@ public class WebCrawlerControllerTest {
 	public void crawl_WhithUrl_ShouldUseDefaultParams() throws Exception {
 		// Given
 		String url = "http://toto.com";
-		when(webCrawlerServiceMock.crawl(url, 0, new String[0])).thenReturn(Stream.empty());
+		when(webCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
 
 		// When
 		ResultActions resultActions = mockMvc.perform(get("/crawl?url=" + url));
 
 		// Then
 		resultActions.andExpect(status().isOk());
-		verify(webCrawlerServiceMock, times(1)).crawl(url, 0);
+		verify(webCrawlerServiceMock, times(1)).crawl(url, defaultDepth);
 	}
 
 	@Test
@@ -115,5 +123,66 @@ public class WebCrawlerControllerTest {
 		verify(webCrawlerServiceMock, times(1)).crawl(url, depth, extensions);
 		resultActions.andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(2)))
 				.andExpect(jsonPath("$[0]", is(urlResult1))).andExpect(jsonPath("$[1]", is(urlResult2)));
+	}
+	
+	@Test
+	public void crawl_ShouldCallStandardWebCrawlerWithoutMethod() throws Exception {
+		// Given
+		String url = "http://toto.com";
+		when(webCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+
+		// When
+		ResultActions resultActions = mockMvc.perform(get("/crawl?url="+url));
+
+		// Then
+		resultActions.andExpect(status().isOk());
+		verify(webCrawlerServiceMock, times(1)).crawl(url, defaultDepth);
+	}
+	
+	@Test
+	public void crawl_ShouldCallAkkWebCrawlerWithAkkaMethod() throws Exception {
+		// Given
+		String url = "http://toto.com";
+		when(webCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+		when(akkaWebCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+
+		// When
+		ResultActions resultActions = mockMvc.perform(get("/crawl?url="+url+"&method=AKKA"));
+
+		// Then
+		resultActions.andExpect(status().isOk());
+		verify(akkaWebCrawlerServiceMock, times(1)).crawl(url, defaultDepth);
+		verifyZeroInteractions(webCrawlerServiceMock);
+	}
+	
+	@Test
+	public void crawl_ShouldCallStandardWebCrawlerWithStandardMethod() throws Exception {
+		// Given
+		String url = "http://toto.com";
+		when(webCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+		when(akkaWebCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+
+		// When
+		ResultActions resultActions = mockMvc.perform(get("/crawl?url="+url+"&method=STANDARD"));
+
+		// Then
+		resultActions.andExpect(status().isOk());
+		verify(webCrawlerServiceMock, times(1)).crawl(url, defaultDepth);
+		verifyZeroInteractions(akkaWebCrawlerServiceMock);
+	}
+	
+	@Test
+	public void crawl_ShouldFaildWithUnknowMethod() throws Exception {
+		// Given
+		String url = "http://toto.com";
+		when(webCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+		when(akkaWebCrawlerServiceMock.crawl(url, defaultDepth, defaultExtensions)).thenReturn(Stream.empty());
+
+		// When
+		ResultActions resultActions = mockMvc.perform(get("/crawl?url="+url+"&method=toto"));
+
+		// Then
+		resultActions.andExpect(status().isBadRequest());
+		verifyZeroInteractions(akkaWebCrawlerServiceMock,webCrawlerServiceMock);
 	}
 }

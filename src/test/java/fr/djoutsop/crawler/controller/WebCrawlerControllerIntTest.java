@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.RestTemplate;
 
 import fr.djoutsop.crawler.WebCrawlerConfiguration;
+import fr.djoutsop.crawler.entity.Method;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(WebCrawlerConfiguration.class)
@@ -67,11 +68,28 @@ public class WebCrawlerControllerIntTest {
 	}
 
 	@Test
-	public void crawl() throws IOException {
+	public void crawl_WithStandardMethod() throws IOException {
 		// Given
 		RestTemplate restTemplate = new TestRestTemplate();
 		String url = "http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296";
 		String queryUri = getBaseUrl() + "/crawl?depth=4&filter=zip&url="+url;
+
+		// When
+		List<String> result = restTemplate.getForObject(queryUri, List.class);
+
+		// Then
+		assertThat(result, containsInAnyOrder(
+				url+"/0_0_le_jour_de_cong_de_tatsumaki_5676a32b90a8a/One_Punch-Man_v10_c0.zip",
+				url+"/0_2_special_sentai_572ca2d478266/One_Punch-Man_c0_s2.zip"));
+
+	}
+	
+	@Test
+	public void crawl_WithAkkaMethod() throws IOException {
+		// Given
+		RestTemplate restTemplate = new TestRestTemplate();
+		String url = "http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296";
+		String queryUri = getBaseUrl() + "/crawl?depth=4&filter=zip&url="+url+"&method="+Method.AKKA;
 
 		// When
 		List<String> result = restTemplate.getForObject(queryUri, List.class);

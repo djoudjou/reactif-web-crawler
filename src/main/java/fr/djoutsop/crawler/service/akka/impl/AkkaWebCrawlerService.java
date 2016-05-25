@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
@@ -19,14 +20,18 @@ import akka.util.Timeout;
 import fr.djoutsop.crawler.service.IWebCrawlerService;
 import fr.djoutsop.crawler.service.akka.Messages.Start;
 import fr.djoutsop.crawler.service.akka.actor.Supervisor;
+import fr.djoutsop.crawler.utils.Loggable;
 
+@Service
 public class AkkaWebCrawlerService implements IWebCrawlerService,ScrapObserver {
-	Logger logger = LoggerFactory.getLogger(AkkaWebCrawlerService.class);
+	@Loggable
+	Logger logger;
+	//Logger logger = LoggerFactory.getLogger(AkkaWebCrawlerService.class);
 	
 	List<String> result = new ArrayList<>();
 
 	@Override
-	public Stream<String> crawl(String url, int maxDepth, String... extensions)
+	public Stream<String> crawl(String url, int maxDepth,String... extensions)
 			throws IOException {
 
 		ActorSystem system = ActorSystem.create();
@@ -34,7 +39,7 @@ public class AkkaWebCrawlerService implements IWebCrawlerService,ScrapObserver {
 
 		supervisor.tell(new Start(new URL(url)), ActorRef.noSender());
 
-		//Timeout timeout = new Timeout(Duration.create(10, "minutes"));
+//		Timeout timeout = new Timeout(Duration.create(10, "minutes"));
 		Timeout timeout = new Timeout(Duration.create(5, "seconds"));
 		try {
 			Await.result(system.whenTerminated(), timeout.duration());
