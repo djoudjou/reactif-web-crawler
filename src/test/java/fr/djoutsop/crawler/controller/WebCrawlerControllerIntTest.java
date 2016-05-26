@@ -34,6 +34,8 @@ public class WebCrawlerControllerIntTest {
 
 	@Value("${local.server.port}")
 	private int port;
+	
+	private int portTomcat = 9090;
 
 	/**
 	 * Returns the base url for your rest interface
@@ -46,7 +48,7 @@ public class WebCrawlerControllerIntTest {
 
 	@Before
 	public void startJetty() throws Exception {
-		server = new Server(8080);
+		server = new Server(portTomcat);
 		ResourceHandler resource_handler = new ResourceHandler();
 		resource_handler.setDirectoriesListed(true);
 		resource_handler.setWelcomeFiles(new String[] { "index.html" });
@@ -71,7 +73,7 @@ public class WebCrawlerControllerIntTest {
 	public void crawl_WithStandardMethod() throws IOException {
 		// Given
 		RestTemplate restTemplate = new TestRestTemplate();
-		String url = "http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296";
+		String url = "http://localhost:" + portTomcat + "/src/test/resources/fakesite/one_punchman_56161ed820296";
 		String queryUri = getBaseUrl() + "/crawl?depth=4&filter=zip&url="+url;
 
 		// When
@@ -88,7 +90,7 @@ public class WebCrawlerControllerIntTest {
 	public void crawl_WithAkkaMethod() throws IOException {
 		// Given
 		RestTemplate restTemplate = new TestRestTemplate();
-		String url = "http://localhost:8080/src/test/resources/fakesite/one_punchman_56161ed820296";
+		String url = "http://localhost:" + portTomcat + "/src/test/resources/fakesite/one_punchman_56161ed820296";
 		String queryUri = getBaseUrl() + "/crawl?depth=4&filter=zip&url="+url+"&method="+Method.AKKA;
 
 		// When

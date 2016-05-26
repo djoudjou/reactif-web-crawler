@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,33 +14,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import fr.djoutsop.crawler.entity.Content;
-import fr.djoutsop.crawler.service.procedural.impl.Scraper;
-import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
+import fr.djoutsop.crawler.service.IScraperService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class WebCrawlerServiceTest {
+public class StandardWebCrawlerServiceTest {
 
-	WebCrawlerService subject;
-	Scraper scraperServiceMock;
+	@Mock
+	IScraperService scraperServiceMock;
+	@Mock
 	Logger loggerMock;
 	
-	@Before
-	public void setup() {
-		subject = new WebCrawlerService();
-		scraperServiceMock = mock(Scraper.class);
-		loggerMock = mock(Logger.class);
-		
-		subject.scraper = scraperServiceMock;
-		subject.logger = loggerMock;
-	}
-
+	@InjectMocks
+	StandardWebCrawlerService subject;
+	
 	@Test
 	public void crawl_ShouldOnlyScrapNewUrl() throws IOException {
 		// Given

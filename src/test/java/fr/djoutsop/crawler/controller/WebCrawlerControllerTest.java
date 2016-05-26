@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import fr.djoutsop.crawler.service.akka.impl.AkkaWebCrawlerService;
-import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
+import fr.djoutsop.crawler.service.procedural.impl.StandardWebCrawlerService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WebCrawlerControllerTest {
@@ -34,7 +34,7 @@ public class WebCrawlerControllerTest {
 	final String[] defaultExtensions = new String[0];
 
 	@Mock
-	WebCrawlerService webCrawlerServiceMock;
+	StandardWebCrawlerService webCrawlerServiceMock;
 	
 	@Mock
 	AkkaWebCrawlerService akkaWebCrawlerServiceMock;

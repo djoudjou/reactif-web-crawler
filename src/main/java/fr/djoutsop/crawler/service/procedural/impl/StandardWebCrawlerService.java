@@ -12,16 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fr.djoutsop.crawler.entity.Content;
+import fr.djoutsop.crawler.service.IScraperService;
 import fr.djoutsop.crawler.service.IWebCrawlerService;
 import fr.djoutsop.crawler.utils.Loggable;
 
 @Service
-public class WebCrawlerService implements IWebCrawlerService {
+public class StandardWebCrawlerService implements IWebCrawlerService {
 	@Loggable
 	Logger logger;
 
 	@Autowired
-	Scraper scraper;
+	IScraperService scraperService;
 
 	int maxDepth;
 
@@ -47,10 +48,6 @@ public class WebCrawlerService implements IWebCrawlerService {
 		return scrappedUrl.stream().anyMatch(alreadyScrappedUrl -> normalizedUrl.startsWith(alreadyScrappedUrl));
 	}
 
-	boolean isFile(String url) {
-		return !"".equals(FilenameUtils.getExtension(url));
-	}
-
 	String normalize(String url) {
 		String normalizedUrl = RequestUtil.normalize(url);
 		while (normalizedUrl.endsWith("/")) {
@@ -58,10 +55,14 @@ public class WebCrawlerService implements IWebCrawlerService {
 		}
 		return normalizedUrl;
 	}
+	
+	boolean isFile(String url) {
+		return !"".equals(FilenameUtils.getExtension(url));
+	}
 
 	Stream<String> recursiveScrap(String urlToScrap, String referer, int depth) {
 		try {
-			Content content = scraper.scrap(urlToScrap, referer);
+			Content content = scraperService.scrap(urlToScrap, referer);
 
 			if (depth < maxDepth && content != null && !content.getUrls().isEmpty()) {
 				return content.getUrls().stream()

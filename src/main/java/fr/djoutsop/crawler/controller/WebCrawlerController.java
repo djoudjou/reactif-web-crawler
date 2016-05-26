@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import fr.djoutsop.crawler.entity.Method;
 import fr.djoutsop.crawler.service.akka.impl.AkkaWebCrawlerService;
-import fr.djoutsop.crawler.service.procedural.impl.WebCrawlerService;
+import fr.djoutsop.crawler.service.procedural.impl.StandardWebCrawlerService;
 import fr.djoutsop.crawler.utils.Loggable;
 
 @Controller
@@ -23,7 +23,7 @@ public class WebCrawlerController {
 	Logger logger;
 
 	@Autowired
-	WebCrawlerService webCrawlerService;
+	StandardWebCrawlerService webCrawlerService;
 
 	@Autowired
 	AkkaWebCrawlerService akkaWebCrawlerService;

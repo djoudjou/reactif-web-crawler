@@ -1,14 +1,18 @@
 package fr.djoutsop.crawler.service.akka.impl;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.tomcat.util.http.RequestUtil;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import scala.concurrent.Await;
@@ -23,45 +27,61 @@ import fr.djoutsop.crawler.service.akka.actor.Supervisor;
 import fr.djoutsop.crawler.utils.Loggable;
 
 @Service
-public class AkkaWebCrawlerService implements IWebCrawlerService,ScrapObserver {
+public class AkkaWebCrawlerService implements IWebCrawlerService {
 	@Loggable
 	Logger logger;
-	//Logger logger = LoggerFactory.getLogger(AkkaWebCrawlerService.class);
+
+	Set<String> allowedExtensions = new HashSet<>();
+
+	boolean filterAllowedExtensions(String url) {
+		if (!allowedExtensions.isEmpty()) {
+			String extension = FilenameUtils.getExtension(url).toLowerCase();
+			return allowedExtensions.contains(extension);
+		} else {
+			return true;
+		}
+	}
+
+	String normalize(String url) {
+		String normalizedUrl = RequestUtil.normalize(url);
+		while (normalizedUrl.endsWith("/")) {
+			normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
+		}
+		return normalizedUrl;
+	}
 	
-	List<String> result = new ArrayList<>();
-
 	@Override
-	public Stream<String> crawl(String url, int maxDepth,String... extensions)
-			throws IOException {
+	public Stream<String> crawl(String url, int maxDepth, String... extensions) throws IOException {
 
-		ActorSystem system = ActorSystem.create();
-		ActorRef supervisor = system.actorOf(Supervisor.props(system,this));
+		for (String ext : extensions) {
+			this.allowedExtensions.add(ext.toLowerCase());
+		}
+		List<String> result = crawl(url);
+		return result.stream().filter(this::filterAllowedExtensions);
+	}
+
+	List<String> crawl(String url) throws MalformedURLException {
+		List<String> result = new ArrayList<>();
+
+		ActorSystem system = ActorSystem.create("scraper-system");
+		ActorRef supervisor = system.actorOf(Supervisor.props(system, result));
 
 		supervisor.tell(new Start(new URL(url)), ActorRef.noSender());
 
-//		Timeout timeout = new Timeout(Duration.create(10, "minutes"));
-		Timeout timeout = new Timeout(Duration.create(5, "seconds"));
+		// Timeout timeout = new Timeout(Duration.create(10, "minutes"));
+		// Timeout timeout = new Timeout(Duration.create(20, "seconds"));
+		Timeout timeout = new Timeout(Duration.create(10, "seconds"));
 		try {
 			Await.result(system.whenTerminated(), timeout.duration());
 		} catch (TimeoutException e) {
 			logger.debug("c'est fini trop tard");
 		} catch (Exception e) {
-			logger.error(e.getMessage(),e);
+			logger.error(e.getMessage(), e);
 		}
 
 		supervisor.tell(PoisonPill.getInstance(), ActorRef.noSender());
 
 		system.terminate();
-		return result.stream();
+		return result;
 	}
-
-	@Override
-	public void scrap(URL url) {
-		result.add(url.toString());		
-	}
-
-
-
-	
-
 }

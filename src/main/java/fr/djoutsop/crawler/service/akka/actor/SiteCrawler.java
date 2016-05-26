@@ -2,16 +2,12 @@ package fr.djoutsop.crawler.service.akka.actor;
 
 import java.net.URL;
 import java.util.Queue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import scala.concurrent.ExecutionContext;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
@@ -21,7 +17,10 @@ import akka.dispatch.Recover;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import fr.djoutsop.crawler.service.akka.Messages.Scrap;
-import fr.djoutsop.crawler.service.akka.Messages.*;
+import fr.djoutsop.crawler.service.akka.Messages.ScrapFailure;
+import scala.concurrent.ExecutionContext;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
 public class SiteCrawler extends UntypedActor {
 	Logger logger = LoggerFactory.getLogger(SiteCrawler.class);
