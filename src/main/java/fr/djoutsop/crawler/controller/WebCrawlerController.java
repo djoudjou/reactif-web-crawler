@@ -1,7 +1,10 @@
 package fr.djoutsop.crawler.controller;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,7 +30,7 @@ public class WebCrawlerController {
 
 	@Autowired
 	AkkaWebCrawlerService akkaWebCrawlerService;
-
+	
 	@RequestMapping(value = "/crawl", method = RequestMethod.GET)
 	public @ResponseBody List<String> crawl(
 			@RequestParam("url") String urlToCrawl,

@@ -13,10 +13,10 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tomcat.util.http.RequestUtil;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.PoisonPill;
@@ -25,11 +25,17 @@ import fr.djoutsop.crawler.service.IWebCrawlerService;
 import fr.djoutsop.crawler.service.akka.Messages.Start;
 import fr.djoutsop.crawler.service.akka.actor.Supervisor;
 import fr.djoutsop.crawler.utils.Loggable;
+import scala.concurrent.Await;
+import scala.concurrent.duration.Duration;
 
 @Service
+@Scope("prototype")
 public class AkkaWebCrawlerService implements IWebCrawlerService {
 	@Loggable
 	Logger logger;
+	
+	@Value("${crawler_duration}")
+	private int duration;
 
 	Set<String> allowedExtensions = new HashSet<>();
 
@@ -68,9 +74,7 @@ public class AkkaWebCrawlerService implements IWebCrawlerService {
 
 		supervisor.tell(new Start(new URL(url)), ActorRef.noSender());
 
-		// Timeout timeout = new Timeout(Duration.create(10, "minutes"));
-		// Timeout timeout = new Timeout(Duration.create(20, "seconds"));
-		Timeout timeout = new Timeout(Duration.create(10, "seconds"));
+		Timeout timeout = new Timeout(Duration.create(duration, "seconds"));
 		try {
 			Await.result(system.whenTerminated(), timeout.duration());
 		} catch (TimeoutException e) {
