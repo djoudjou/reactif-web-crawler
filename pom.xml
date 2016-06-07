@@ -113,78 +113,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>ro.isdc.wro4j</groupId>
-				<artifactId>wro4j-maven-plugin</artifactId>
-				<version>${wro4j.version}</version>
-				<executions>
-					<execution>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<wroManagerFactory>ro.isdc.wro.maven.plugin.manager.factory.ConfigurableWroManagerFactory</wroManagerFactory>
-					<cssDestinationFolder>${project.build.directory}/generated-resources/static/css</cssDestinationFolder>
-					<jsDestinationFolder>${project.build.directory}/generated-resources/static/js</jsDestinationFolder>
-					<wroFile>${project.build.directory}/wro/wro.xml</wroFile>
-					<extraConfigFile>${basedir}/src/main/wro/wro.properties</extraConfigFile>
-					<contextFolder>${basedir}/src/main/wro</contextFolder>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.webjars</groupId>
-						<artifactId>jquery</artifactId>
-						<version>${jquery.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>org.webjars</groupId>
-						<artifactId>angularjs</artifactId>
-						<version>${angularjs.version}</version>
-					</dependency>
-					<dependency>
-						<groupId>org.webjars</groupId>
-						<artifactId>bootstrap</artifactId>
-						<version>${bootstrap.version}</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
-				<groupId>com.github.searls</groupId>
-				<artifactId>jasmine-maven-plugin</artifactId>
-				<version>2.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>test</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<additionalContexts>
-						<context>
-							<contextRoot>/lib</contextRoot>
-							<directory>${project.build.directory}/generated-resources/static/js</directory>
-						</context>
-					</additionalContexts>
-					<preloadSources>
-						<source>/lib/angular-bootstrap.js</source>
-						<source>/webjars/angularjs/1.5.5/angular-mocks.js</source>
-					</preloadSources>
-					<jsSrcDir>${project.basedir}/src/main/resources/static/js</jsSrcDir>
-					<jsTestSrcDir>${project.basedir}/src/test/resources/static/js</jsTestSrcDir>
-					<webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.webjars</groupId>
-						<artifactId>angularjs</artifactId>
-						<version>${angularjs.version}</version>
-					</dependency>
-				</dependencies>
-			</plugin>
+			
 		</plugins>
 	</build>
 
@@ -209,6 +138,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
 
 		
 		<dependency>
@@ -231,8 +165,8 @@
 			<version>1.9.1</version>
 		</dependency>
 
-		<!-- http://mvnrepository.com/artifact/com.typesafe.akka/akka-actor_2.11 -->
 		<dependency>
+			<!-- http://mvnrepository.com/artifact/com.typesafe.akka/akka-actor_2.11 -->
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-actor_2.11</artifactId>
 			<version>2.4.6</version>
@@ -272,7 +206,11 @@
 		</dependency>
 
 
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
 
 
 	</dependencies>

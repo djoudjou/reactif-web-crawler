@@ -21,9 +21,6 @@ import fr.djoutsop.crawler.service.impl.ScraperService;
 public class Scraper extends UntypedActor {
 	Logger logger = LoggerFactory.getLogger(Scraper.class);
 
-	private final String EMPTY_STRING = "";
-	private final String HREF = "href";
-
 	final ActorRef indexer;
 	final Map<URL, ContentMessage> store;
 	final IScraperService scraperService;
@@ -49,22 +46,6 @@ public class Scraper extends UntypedActor {
 		} else {
 			unhandled(message);
 		}
-
-	}
-
-	String mapUrl(Element elt) {
-		String result = null;
-		if (!isQueryFilter(elt)) {
-			result = elt.absUrl(HREF);
-			if (EMPTY_STRING.equals(result)) {
-				result = elt.attr(HREF);
-			}
-		}
-		return result;
-	}
-
-	boolean isQueryFilter(Element elt) {
-		return elt.attr(HREF).startsWith("?");
 	}
 
 }

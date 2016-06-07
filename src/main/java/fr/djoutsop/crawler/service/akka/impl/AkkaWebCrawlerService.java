@@ -37,40 +37,18 @@ public class AkkaWebCrawlerService implements IWebCrawlerService {
 	@Value("${crawler_duration}")
 	private int duration;
 
-	Set<String> allowedExtensions = new HashSet<>();
-
-	boolean filterAllowedExtensions(String url) {
-		if (!allowedExtensions.isEmpty()) {
-			String extension = FilenameUtils.getExtension(url).toLowerCase();
-			return allowedExtensions.contains(extension);
-		} else {
-			return true;
-		}
-	}
-
-	String normalize(String url) {
-		String normalizedUrl = RequestUtil.normalize(url);
-		while (normalizedUrl.endsWith("/")) {
-			normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
-		}
-		return normalizedUrl;
-	}
-	
 	@Override
 	public Stream<String> crawl(String url, int maxDepth, String... extensions) throws IOException {
 
-		for (String ext : extensions) {
-			this.allowedExtensions.add(ext.toLowerCase());
-		}
-		List<String> result = crawl(url);
-		return result.stream().filter(this::filterAllowedExtensions);
+		List<String> result = crawl(url,extensions);
+		return result.stream();
 	}
 
-	List<String> crawl(String url) throws MalformedURLException {
+	List<String> crawl(String url,String... extensions) throws MalformedURLException {
 		List<String> result = new ArrayList<>();
 
 		ActorSystem system = ActorSystem.create("scraper-system");
-		ActorRef supervisor = system.actorOf(Supervisor.props(system, result));
+		ActorRef supervisor = system.actorOf(Supervisor.props(system, extensions, result));
 
 		supervisor.tell(new Start(new URL(url)), ActorRef.noSender());
 

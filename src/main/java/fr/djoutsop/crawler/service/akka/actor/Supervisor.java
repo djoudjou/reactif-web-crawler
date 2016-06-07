@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.tomcat.util.http.RequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class Supervisor extends UntypedActor {
 	final ActorSystem system;
 	final List<String> resultCollector;
 
+	Set<String> allowedExtensions;
 	Set<String> scrappedNormalizedUrl = new HashSet<>();
 
 	boolean filterNewUrl(String url) {
@@ -57,13 +59,22 @@ public class Supervisor extends UntypedActor {
 		return normalizedUrl;
 	}
 
-	public static Props props(ActorSystem system, List<String> resultCollector) {
-		return Props.create(Supervisor.class, () -> new Supervisor(system, resultCollector));
+	public static Props props(ActorSystem system, String[] extensions, List<String> resultCollector) {
+		return Props.create(Supervisor.class, () -> new Supervisor(system, extensions, resultCollector));
 	}
 
-	public Supervisor(ActorSystem system, List<String> resultCollector) {
+	public Supervisor(ActorSystem system, String[] extensions, List<String> resultCollector) {
 		this.system = system;
 		this.resultCollector = resultCollector;
+
+		allowedExtensions = new HashSet<>();
+		for (String ext : extensions) {
+			allowedExtensions.add(ext.toLowerCase());
+		}
+		if (!allowedExtensions.isEmpty()) {
+			allowedExtensions.add("");
+		}
+
 		indexer = context().actorOf(Indexer.props(self()));
 	}
 
@@ -71,7 +82,7 @@ public class Supervisor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if (message instanceof Start) {
 			Start start = (Start) message;
-			this.filterNewUrl(start.url.toString());
+			filterNewUrl(start.url.toString());
 			logger.debug("starting {}", start.url);
 			scrap(start.url);
 		} else if (message instanceof ScrapFinished) {
@@ -82,6 +93,7 @@ public class Supervisor extends UntypedActor {
 			if (numVisited < maxPages) {
 				indexFinished.urls.stream()
 						.filter(url -> this.filterNewUrl(url.toString()) && this.filterOnlySubUrl(url.toString()))
+						.filter(url -> this.filterAllowedExtensions(url.toString()))
 						.filter(l -> !scrapCounts.containsKey(l)).forEach(this::scrap);
 			}
 			checkAndShutdown(indexFinished.url);
@@ -115,10 +127,17 @@ public class Supervisor extends UntypedActor {
 
 			numVisited += 1;
 			toScrap.add(url);
-			resultCollector.add(url.toString());
+			
+			if(isExtensions(url)){
+				resultCollector.add(url.toString());
+			}
 			countVisits(url);
 			actor.tell(new Scrap(url), self());
 		}
+	}
+
+	boolean isExtensions(URL url) {
+		return !"".equals(getExtension(url.toString()));
 	}
 
 	void checkAndShutdown(URL url) {
@@ -132,5 +151,18 @@ public class Supervisor extends UntypedActor {
 
 	void countVisits(URL url) {
 		scrapCounts.put(url, new Integer(scrapCounts.getOrDefault(url, 0) + 1));
+	}
+
+	boolean filterAllowedExtensions(String url) {
+		if (!allowedExtensions.isEmpty()) {
+			String extension = getExtension(url);
+			return allowedExtensions.contains(extension);
+		} else {
+			return true;
+		}
+	}
+
+	String getExtension(String url) {
+		return FilenameUtils.getExtension(url).toLowerCase();
 	}
 }
