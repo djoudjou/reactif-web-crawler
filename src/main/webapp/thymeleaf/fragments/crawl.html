@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+</head>
+
+<body>
+	<div th:fragment="resultsList" th:unless="${#lists.isEmpty(scans)}"
+		class="results-block">
+		<table>
+			<thead>
+				<tr>
+					<th>Scan</th>
+					<th>action</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="scan : ${scans}">
+					<td th:text="${scan}">link</td>
+					<td>Download</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
