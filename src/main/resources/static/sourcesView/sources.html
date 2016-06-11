@@ -1,0 +1,59 @@
+<div class="container-fluid">
+	<div ng-controller="SourcesCtrl as ctrl" class="row">
+		<div class="col-sm-3 col-md-2 sidebar">
+			<ul class="nav nav-sidebar">
+				<li class="active"><a href="#">Sources <span
+						class="sr-only">(current)</span></a></li>
+			</ul>
+		</div>
+		<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+			<h1 class="page-header">Mangas</h1>
+
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>manga</th>
+							<th>url</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat = "source in ctrl.sources">
+							<td>{{source.name}}</td>
+							<td>{{source.url}}</td>
+							<td>
+								<button type="button" class="btn btn-default"
+									ng-click="ctrl.retrieveScans(source)"
+									ng-disabled="source.loading">
+									<span 
+										ng-class="{'glyphicon':true, 'glyphicon-refresh': true, 'glyphicon-refresh-animate': source.loading }"
+										 aria-hidden="true">
+									</span>
+								</button>
+								<span>{{source.id}}</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<!-- Results block -->
+			<div class="results-block" ng-show="ctrl.scans.length>0">
+				<table>
+					<thead>
+						<tr>
+							<th>Scan</th>
+							<th>action</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat = "scan in ctrl.scans">
+							<td>{{scan}}</td>
+							<td>Download</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
