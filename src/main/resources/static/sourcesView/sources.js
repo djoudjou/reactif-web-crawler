@@ -11,36 +11,31 @@
 	.controller('SourcesCtrl', SourcesCtrl);
 	
 	
-	SourcesCtrl.$inject = ['$http'];
+	SourcesCtrl.$inject = ['ScansService','SourcesService','$http'];
 	
-	function SourcesCtrl($http) {
+
+	function SourcesCtrl(ScansService, SourcesService, $http) {
 			var that = this;
 			
-			that.sources = [
-					{
-						id : 1,
-						loading : false,
-						name : 'one punchman',
-						url : 'http://wallagain.cc/content/comics/one_punchman_56161ed820296/'
-					},
-					{
-						id : 2,
-						loading : false,
-						name : 'fairy tail',
-						url : 'http://www.wallagain.cc/content/comics/fairy_tail_5146fe64d7cb0/'
-					} ];
+			that.sources = [];
 			
 			that.retrieveScans = retrieveScans;
 			
-			that.scans = []
+			that.scans = [];
+			
+			SourcesService.getSources().then(function(response) {
+				that.sources = response;
+			});
 			
 			function retrieveScans(source) {
 				source.loading = true;
-				var url = '/crawl?method=AKKA&filter=zip&url=' + source.url;
-				$http.get(url).success( function(response) {
-						that.scans = response;
-						source.loading = false;
-		            });
+				
+				ScansService.loadScans(source).then(function(response) {
+					that.scans = response;
+					source.loading = false;
+				},function(error){
+					source.loading = false;
+				});
 				
 			}
 	}

@@ -1,0 +1,55 @@
+server:
+    port: 9000
+management:
+    port: 9001
+    address: 127.0.0.1
+    
+
+#crawler max duration in seconds
+crawler_duration : 10
+
+logging:
+    level:
+        root:ERROR
+        org.springframework.web:ERROR
+        fr.djoutsop:DEBUG
+
+info:
+    build:
+        artifact:@project.artifactId@
+        name:@project.name@
+        description:@project.description@
+        version:@project.version@
+
+
+spring:
+    thymeleaf:
+        prefix:/thymeleaf/
+        cache:false
+    
+    devtools:
+        restart:
+            enabled: false
+        livereload:
+            enabled: false
+    datasource:
+        url: jdbc:h2:mem:manga_crawler;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        name:
+        username: manga_crawler
+        password:
+    h2:
+        console:
+            enabled: false
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+        database: H2
+        show_sql: true
+        properties:
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
+            hibernate.generate_statistics: true
+            hibernate.cache.region.factory_class: org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
+    
+liquibase:
+    contexts: dev
+    change-log: classpath:/liquibase/master.xml
