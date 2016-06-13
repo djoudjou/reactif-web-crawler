@@ -1,9 +1,3 @@
-server:
-    port: 9000
-management:
-    port: 9001
-    address: 127.0.0.1
-    
 
 #crawler max duration in seconds
 crawler_duration : 10
