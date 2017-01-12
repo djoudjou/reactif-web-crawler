@@ -2,7 +2,7 @@ node {
 echo "Running build number ${env.BUILD_ID}"
   
 stage "Build"
-  echo "Running stage Build test"
+  echo "Running stage Build test manu"
   //sh 'mvn clean compile'
   
 stage "Test"
